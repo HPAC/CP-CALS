@@ -1,0 +1,45 @@
+language: cpp
+dist: bionic
+compiler:
+  - gcc
+addons:
+  apt:
+#    sources:
+#      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-8
+      - g++-8
+      - cmake
+      - libgtest-dev
+
+before_install:
+  - wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
+  - sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
+  - sudo wget https://apt.repos.intel.com/setup/intelproducts.list -O /etc/apt/sources.list.d/intelproducts.list
+  - sudo apt-get update
+  - sudo apt-get install intel-mkl-2019.5-075 --allow-unauthenticated
+
+install:
+  - if [ "$C" = "gcc" ]; then export C="gcc-8"; fi
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-8"; fi
+  # Install GTest
+  - pushd .
+  - cd /usr/src/gtest
+  - sudo mkdir build
+  - cd build
+  - sudo cmake ..
+  - sudo make
+  - sudo make install
+  - popd
+
+script:
+  - source /opt/intel/bin/compilervars.sh intel64 -platform linux
+  - cd build
+  - cmake -DCMAKE_BUILD_TYPE=RELEASE -DWITH_TRAVIS=On -DWITH_TESTS=On -DWITH_MKL=On -DWITH_BLIS=Off -DWITH_OPENBLAS=Off ..
+  - VERBOSE=1 cmake --build .
+  - ctest -VV
+
+notifications:
+  email:
+    on_success: never
+    on_failure: always
