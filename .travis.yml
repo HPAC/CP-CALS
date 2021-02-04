@@ -34,6 +34,7 @@ install:
 
 script:
   - source /opt/intel/bin/compilervars.sh intel64 -platform linux
+  - mkdir build
   - cd build
   - cmake -DCMAKE_BUILD_TYPE=RELEASE -DWITH_TRAVIS=On -DWITH_TESTS=On -DWITH_MKL=On -DWITH_BLIS=Off -DWITH_OPENBLAS=Off ..
   - VERBOSE=1 cmake --build .
