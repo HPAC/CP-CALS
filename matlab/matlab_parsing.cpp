@@ -217,10 +217,10 @@ namespace cals::matlab::parsing
         cals::matlab::parsing::parse_enum(args, "update-method", params.update_method, 2, update_types, update_names);
 
     // Read MTTKRP method
-    const cals::ops::MTTKRP_METHOD mttkrp_types[] = {cals::ops::MTTKRP_METHOD::MTTKRP,
-                                                     cals::ops::MTTKRP_METHOD::TWOSTEP0,
-                                                     cals::ops::MTTKRP_METHOD::TWOSTEP1,
-                                                     cals::ops::MTTKRP_METHOD::AUTO};
+    const cals::mttkrp::MTTKRP_METHOD mttkrp_types[] = {cals::mttkrp::MTTKRP_METHOD::MTTKRP,
+                                                        cals::mttkrp::MTTKRP_METHOD::TWOSTEP0,
+                                                        cals::mttkrp::MTTKRP_METHOD::TWOSTEP1,
+                                                        cals::mttkrp::MTTKRP_METHOD::AUTO};
     const char *mttkrp_names[] = {"mttkrp", "twostep0", "twostep1", "auto"};
     params.mttkrp_method =
         cals::matlab::parsing::parse_enum(args, "mttkrp-method", params.mttkrp_method, 4, mttkrp_types, mttkrp_names);

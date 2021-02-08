@@ -7,14 +7,18 @@ Software for computing the Canonical Polyadic Decomposition (CPD), also known as
 ## Requirements
 
 ### Mandatory
-* CMake 3.13.5 or higher
-* GNU g++ 8.0 (or any C++ compiler with C++17 support)
+* CMake 3.17.5 or higher.
+  A bash script is provided, to help install CMake 3.17.5 (for Linux) in the `extern` folder and updates the `PATH` environment variable to point to it. Try using it by navigating to the directory where you cloned CALS and running: `source scripts/environment_setup.sh`. Then, using the same terminal session, running `cmake --version` should return version 3.17.5.
 * OpenMP
-* Intel MKL (not required for MATLAB MEX generation)
+* BLAS/LAPACK (not required for MATLAB MEX generation). Either of the following libraries has been tested to work:
+  * Intel MKL
+  * OpenBLAS
 
 ### Optional
 * CUDA 11
 * MATLAB 2019b
+
+CALS has been tested to compile with g++-8, g++-10 and clang-10.
 
 ## Compilation
 
@@ -59,6 +63,12 @@ cmake  \
 make -j 8 all
 ```
 
+## A simple example of using CALS in C++
+
 ## Executing example code
 
-After compiling, you can run `driver_MKL` for the CPU driver, or `cuda_driver_MKL` for the GPU driver (provided you compiled with CUDA enabled).
+`src/examples/driver` contains a demonstration of how to use CALS (The -h flag is supported for a look at possible input arguments).
+
+### MATLAB examples
+
+After compiling the MATLAB MEX, one can execute file `matlab/matlab_src/TTB_vs_CALS.m` in MATLAB. This executable performs a comparisson of TensorToolbox and CALS. The user needs to first point MATLAB to the CALS MEX an the Tensor Toolbox source code, using the first two lines of the file.

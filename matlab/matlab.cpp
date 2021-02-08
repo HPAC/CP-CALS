@@ -100,11 +100,12 @@ cals::Tensor mxGetTensor(const mxArray *ptr, bool print)
   DEBUG(int n_elements = mxGetNumberOfElements(data_field);)
 
   double *modes = mxGetDoubles(size_field);
-  int n_modes = mxGetNumberOfElements(size_field);
+  auto n_modes = mxGetNumberOfElements(size_field);
 
-  std::vector<int> modes_vector;
+  std::vector<dim_t> modes_vector;
   modes_vector.reserve(n_modes);
-  for (int i = 0; i < n_modes; i++) modes_vector.push_back(modes[i]);
+  for (int i = 0; i < n_modes; i++)
+    modes_vector.push_back(static_cast<dim_t>(modes[i]));
 
   assert(std::accumulate(modes_vector.cbegin(), modes_vector.cend(), 1lu, std::multiplies<>()) == n_elements);
 
@@ -117,14 +118,14 @@ cals::Tensor mxGetTensor(const mxArray *ptr, bool print)
 
 mxArray *mxSetKtensor(const cals::Ktensor &ktensor)
 {
-  const int n_modes = ktensor.get_n_modes();
+  const auto n_modes = ktensor.get_n_modes();
 
   // Create factor matrix array (cell array in matlab)
   mxArray *cell_array_ptr = mxCreateCellMatrix((mwSize) n_modes, (mwSize) 1);
-  for (int i = 0; i < n_modes; i++)
+  for (dim_t i = 0; i < n_modes; i++)
   {
-    const int rows = ktensor.get_factor(i).get_rows();
-    const int cols = ktensor.get_factor(i).get_cols();
+    const auto rows = ktensor.get_factor(i).get_rows();
+    const auto cols = ktensor.get_factor(i).get_cols();
     mxArray *mat_ptr = mxCreateDoubleMatrix((mwSize) rows, (mwSize) cols, mxREAL);
     double *mat = mxGetDoubles(mat_ptr);
     cals::Matrix(rows, cols, mat).copy(ktensor.get_factor(i));
@@ -132,7 +133,7 @@ mxArray *mxSetKtensor(const cals::Ktensor &ktensor)
   }
 
   // Create lambda array
-  mxArray *lambda_ptr = mxCreateDoubleMatrix((mwSize) ktensor.get_rank(), (mwSize) 1, mxREAL);
+  mxArray *lambda_ptr = mxCreateDoubleMatrix((mwSize) ktensor.get_components(), (mwSize) 1, mxREAL);
   double *lambda = mxGetDoubles(lambda_ptr);
   int i = 0;
   for (const auto &l : ktensor.get_lambda()) lambda[i++] = l;
@@ -152,14 +153,14 @@ cals::Ktensor mxGetKtensor(const mxArray *ptr, bool print)
   // Get lambda array
   mxArray *lambda_field = mxGetField(ptr, 0, "lambda");
   double *lambda = mxGetDoubles(lambda_field);
-  int rank = mxGetNumberOfElements(lambda_field);
+  auto rank = mxGetNumberOfElements(lambda_field);
 
   // Get Cell array of factor matrices
   mxArray *u_field = mxGetField(ptr, 0, "u");
-  int n_modes = mxGetNumberOfElements(u_field);
+  auto n_modes = mxGetNumberOfElements(u_field);
 
   // Create and initialize modes vector
-  std::vector<int> modes;
+  std::vector<dim_t> modes;
   modes.reserve(n_modes);
   for (int i = 0; i < n_modes; ++i)
   {
@@ -168,7 +169,7 @@ cals::Ktensor mxGetKtensor(const mxArray *ptr, bool print)
   }
 
   // Create Ktensor
-  cals::Ktensor ktensor(rank, modes);
+  cals::Ktensor ktensor(static_cast<int>(rank), modes);
 
   // Copy lambda
   ktensor.set_lambda(lambda);
@@ -199,7 +200,7 @@ std::string mxGetStdString(const mxArray *ptr)
 
 std::vector<std::string> mxBuildArgList(int nargs, int offset, const mxArray *margs[])
 {
-  std::vector<std::string> args(nargs - offset);
+  std::vector<std::string> args(static_cast<size_t>(nargs - offset));
   for (int i = 0; i < nargs - offset; i++)
   {
     const mxArray *arg = margs[i + offset];
