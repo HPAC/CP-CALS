@@ -5,7 +5,7 @@
 
 #include "cals.h"
 
-#define MODEL_DIFF_ACC 1e-05
+#define MODEL_DIFF_ACC 1e-01
 
 using std::vector;
 
@@ -25,4 +25,16 @@ void run_cals(const cals::Tensor &X,
               bool print_header,
               const std::basic_string<char> &file_suffix = "");
 
-#endif //CALS_EXPERIMENTS_UTILS_H
+void compare_jk_als_cals(const cals::Tensor &X,
+                         vector<dim_t> &components,
+                         unsigned int num_threads,
+                         cals::CalsParams &params,
+                         const std::basic_string<char> &file_suffix = "",
+                         bool reproducible = false);
+
+void compare_jk_als_cals_real(const cals::Tensor &X,
+                              vector<dim_t> &components,
+                              unsigned int num_threads,
+                              cals::CalsParams &params);
+
+#endif // CALS_EXPERIMENTS_UTILS_H

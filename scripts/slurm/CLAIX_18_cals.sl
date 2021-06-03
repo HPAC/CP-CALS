@@ -33,8 +33,9 @@ else
 fi
 
 cd build || exit
+source ../scripts/environment_setup.sh
 #CC=clang CXX=clang++ ./../extern/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Release -DWITH_MKL=On -DWITH_EXPERIMENTS=Off -DWITH_DIAGNOSTICS=1 ..
-CC=gcc CXX=g++ ./../extern/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Release -DWITH_MKL=On -DWITH_EXPERIMENTS=Off -DWITH_DIAGNOSTICS=1 ..
+CC=gcc CXX=g++ cmake -DCMAKE_BUILD_TYPE=Release -DWITH_MKL=On -DWITH_EXPERIMENTS=Off -DWITH_DIAGNOSTICS=1 ..
 make -j 48
 
 numactl -H
@@ -44,7 +45,7 @@ lscpu
 numactl --cpubind=0,1 --membind=0,1 -- numactl -show
 export OMP_NUM_THREADS=24
 export OMP_THREAD_LIMIT=24
-numactl --cpubind=0,1 --membind=0,1 -- ./src/experiments/experiments_MKL 24
+numactl --cpubind=0,1 --membind=0,1 -- ./src/experiments/experiments_jk 24
 #numactl --cpubind=0,1 --membind=0,1 -- ./src/experiments/benchmark_cals_mttkrp_MKL 24
 #numactl --cpubind=0,1 --membind=0,1 -- ./src/experiments/benchmark_other_mttkrp_MKL 24
 
@@ -59,7 +60,7 @@ numactl --cpubind=0,1 --membind=0,1 -- ./src/experiments/experiments_MKL 24
 numactl --cpubind=0 --membind=0 -- numactl -show
 export OMP_NUM_THREADS=1
 export OMP_THREAD_LIMIT=1
-numactl --cpubind=0 --membind=0 -- ./src/experiments/experiments_MKL 1
+numactl --cpubind=0 --membind=0 -- ./src/experiments/experiments_jk 1
 #numactl --cpubind=0 --membind=0 -- ./src/experiments/benchmark_cals_mttkrp_MKL 1
 #numactl --cpubind=0 --membind=0 -- ./src/experiments/benchmark_other_mttkrp_MKL 1
 

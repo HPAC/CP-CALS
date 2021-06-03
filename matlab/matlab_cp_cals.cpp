@@ -77,22 +77,19 @@
 // ***************************************************************************************************
 //@HEADER
 
-#include "matlab.h"
 #include "cals.h"
-#include "timer.h"
+#include "matlab.h"
 #include "matlab_parsing.h"
+#include "timer.h"
 
 using std::cout;
 using std::endl;
 
 extern "C" {
 
-void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
-{
-  try
-  {
-    if (nrhs < 3)
-    {
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
+  try {
+    if (nrhs < 3) {
       cout << "Expected at least 3 command line arguments" << endl;
       return;
     }
@@ -122,16 +119,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // Get initial Ktensors
     vector<cals::Ktensor> ktensor_init(n_ranks);
     const mxArray *arg = prhs[2];
-    if (mxIsCell(arg))
-    {
+    if (mxIsCell(arg)) {
       auto i = 0;
       for (auto &ktensor : ktensor_init)
-        ktensor = cals::Ktensor(mxGetKtensor(mxGetCell(arg, (mwIndex) i++), debug));
-    } else if (mxIsChar(arg) && mxGetStdString(arg) == "random")
-    {
+        ktensor = cals::Ktensor(mxGetKtensor(mxGetCell(arg, (mwIndex)i++), debug));
+    } else if (mxIsChar(arg) && mxGetStdString(arg) == "random") {
       auto i = 0;
-      for (auto &ktensor : ktensor_init)
-      {
+      for (auto &ktensor : ktensor_init) {
         ktensor = cals::Ktensor(static_cast<int>(ranks[i]), X.get_modes());
         ktensor.randomize();
       }
@@ -141,42 +135,34 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     auto cals_input(ktensor_init);
 
     cals::KtensorQueue cals_queue;
-    for (auto &p : cals_input) cals_queue.emplace(p);
+    for (auto &p : cals_input)
+      cals_queue.emplace(p);
 
     // Call driver
     cout << "OpenMP threads: " << get_threads() << endl;
     auto report = cals::cp_cals(X, cals_queue, cals_params);
 
     // Return results
-    if (nlhs >= 1)
-    {
-      mxArray *cell_array_ptr = mxCreateCellMatrix((mwSize) n_ranks, (mwSize) 1);
-      for (int k = 0; k < n_ranks; k++)
-      {
+    if (nlhs >= 1) {
+      mxArray *cell_array_ptr = mxCreateCellMatrix((mwSize)n_ranks, (mwSize)1);
+      for (int k = 0; k < n_ranks; k++) {
         mxArray *mat_ptr = mxSetKtensor(cals_input[k]);
-        mxSetCell(cell_array_ptr, (mwIndex) k, mat_ptr);
+        mxSetCell(cell_array_ptr, (mwIndex)k, mat_ptr);
       }
       plhs[0] = cell_array_ptr;
     }
-    if (nlhs >= 2)
-    {
-      mxArray *cell_array_ptr = mxCreateCellMatrix((mwSize) n_ranks, (mwSize) 1);
-      for (int k = 0; k < n_ranks; k++)
-      {
+    if (nlhs >= 2) {
+      mxArray *cell_array_ptr = mxCreateCellMatrix((mwSize)n_ranks, (mwSize)1);
+      for (int k = 0; k < n_ranks; k++) {
         mxArray *mat_ptr = mxSetKtensor(ktensor_init[k]);
-        mxSetCell(cell_array_ptr, (mwIndex) k, mat_ptr);
+        mxSetCell(cell_array_ptr, (mwIndex)k, mat_ptr);
       }
       plhs[1] = cell_array_ptr;
     }
     cout << "Done." << endl;
-  }
-  catch (std::string &sExc)
-  {
+  } catch (std::string &sExc) {
     cout << "Call to CALS threw an exception:" << endl;
     cout << "  " << sExc << endl;
   }
 }
-
 }
-
-

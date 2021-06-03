@@ -2,6 +2,7 @@
 #define CALS_MULTI_KTENSOR_H
 
 #include "ktensor.h"
+#include <line_search.h>
 #include <map>
 
 namespace cals {
@@ -12,24 +13,30 @@ struct RegistryEntry {
   Ktensor &ktensor;        /*< Reference to the Ktensor. */
   vector<Matrix> gramians; /*< Gramians associated to the Ktensor. */
   int col;                 /*< The starting column in each factor matrix, where the Ktensor was placed. */
-  Ktensor ls_ktensor{};    /*< Workspace related to line search (only allocated if line search is enabled). */
-  Ktensor ls_tr_ktensor{}; /*< Workspace related to line search (only allocated if line search is enabled). */
+  dim_t id;
+
+  // Line Search parameters
+  ls::LineSearchParams ls_params{};
 };
 
 /* A map associating every model currently in the buffer to data related to it */
 typedef std::map<int, RegistryEntry> Registry;
 
 class MultiKtensor : public Ktensor {
-  int occupancy{0};          /*< Number of occupied cols.*/
-  int start{0};              /*< starting column for every factor multi-matrix */
-  int end{0};                /*< last column for every factor multi-matrix */
-  vector<int> occupancy_vec; /*< Vector indicating the id of each ktensor (model) occupying every column */
+  int occupancy{0};            /*< Number of occupied cols.*/
+  int start{0};                /*< starting column for every factor multi-matrix */
+  int end{0};                  /*< last column for every factor multi-matrix */
+  vector<dim_t> occupancy_vec; /*< Vector indicating the id of each ktensor (model) occupying every column */
 
   vector<dim_t> modes; /*< modes of the Ktensor (same as modes of the target tensor) */
   Registry registry;   /*< Keeps track of Ktensors currently in the buffer. */
 
   bool cuda{false};        /*< Whether CUDA is used (to also allocate GPU related memory) */
   bool line_search{false}; /*< Whether line search is used (to create workspace objects when inserting a new model) */
+  ls::LineSearchParams ls_params{};
+
+  bool flag_jk = false;
+  dim_t unique_kt_id{1};
 
   /** Check whether a specific Ktensor fits into the buffer
    *
@@ -73,16 +80,20 @@ public:
    * @param ktensor_id The unique global ID of the Ktensor.
    * @returns Reference to self.
    * */
-  MultiKtensor &remove(int ktensor_id);
+  MultiKtensor &remove(dim_t ktensor_id);
 
   // Getters & Setters
   Registry &get_registry() { return registry; }
 
   [[nodiscard]] inline int get_start() const noexcept { return start; }
 
+  [[nodiscard]] inline bool get_flag_jk() const noexcept { return flag_jk; }
+
   inline void set_cuda(bool value) { cuda = value; };
 
   inline void set_line_search(bool value) { line_search = value; };
+
+  inline void set_line_search_params(ls::LineSearchParams &params) { ls_params = params; };
 
   [[maybe_unused]] inline vector<dim_t> &get_modes() { return modes; };
 

@@ -24,9 +24,10 @@ void Matrix::print(const std::string &&text) const {
   cout << text << endl;
   cout << "----------------------------------------" << endl;
   cout << "Rows: " << rows << ", Cols: " << cols << endl;
+  cout.precision(4);
   for (dim_t row = 0; row < rows; row++) {
     for (dim_t col = 0; col < cols; col++)
-      cout << "  " << std::setw(6) << (*this)(row, col) << "  ";
+      cout << "  " << std::setw(8) << (*this)(row, col) << "  ";
     cout << std::endl;
   }
   cout << "----------------------------------------" << endl;

@@ -23,7 +23,7 @@ def performance_plot_both(dic, ax=None, print_all=False):
     als_df = dic['alsdata']
     als_omp = dic['alsompdata']
     cals_df = dic['calsdata']
-    ccals_df = dic['ccalsdata']
+    # ccals_df = dic['ccalsdata']
     ttb_l = dic['ttbdata']
 
     if ax is None:

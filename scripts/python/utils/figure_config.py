@@ -10,8 +10,8 @@ colors = ['C0', 'C1', 'C3']
 fig_size_in = {'width': 5.47807, 'height': 6}
 fig_format = '.png'
 
-# f_latex = True
-f_latex = False
+f_latex = True
+# f_latex = False
 if f_latex:
     matplotlib.use("pgf")
     matplotlib.rcParams.update({'text.usetex': True})

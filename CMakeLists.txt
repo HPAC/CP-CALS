@@ -21,8 +21,10 @@ endif ()
 #########################################################################################
 # Find OpenMP
 #########################################################################################
-FIND_PACKAGE(OpenMP REQUIRED COMPONENTS CXX)
-message(STATUS "${OpenMP_CXX_LIBRARIES}")
+if (NOT WITH_MATLAB)
+    FIND_PACKAGE(OpenMP REQUIRED COMPONENTS CXX)
+    message(STATUS "${OpenMP_CXX_LIBRARIES}")
+endif ()
 
 #########################################################################################
 # Find CUBLAS
@@ -105,9 +107,30 @@ if (WITH_MATLAB)
     endif ()
 
     message("MATLAB_ROOT_DIR: " ${MATLAB_PATH})
-    find_package(Matlab COMPONENTS MX_LIBRARY REQUIRED)
 
-    set(CALS_LINK_LIBRARIES ${CALS_LINK_LIBRARIES} ${Matlab_MEX_LIBRARY} ${Matlab_MX_LIBRARY})
+    if (WIN32)
+        find_package(Matlab REQUIRED)
+        set(Matlab_BLAS_LIBRARY   "${Matlab_ROOT_DIR}/extern/lib/win64/microsoft/libmwblas.lib")
+        set(Matlab_LAPACK_LIBRARY "${Matlab_ROOT_DIR}/extern/lib/win64/microsoft/libmwlapack.lib")
+        set(Matlab_IOMP_LIBRARY   "${Matlab_ROOT_DIR}/bin/win64/libiomp5md.lib")
+
+        message("Matlab_INCLUDE_DIRS: " ${Matlab_INCLUDE_DIRS})
+        message("Matlab_IOMP_LIBRARY: " ${Matlab_IOMP_LIBRARY})
+        message("Matlab_MEX_LIBRARY: " ${Matlab_MEX_LIBRARY})
+        message("Matlab_MX_LIBRARY: " ${Matlab_MX_LIBRARY})
+        message("Matlab_BLAS_LIBRARY: " ${Matlab_BLAS_LIBRARY})
+        message("Matlab_LAPACK_LIBRARY: " ${Matlab_LAPACK_LIBRARY})
+
+        set(Matlab_LINK_LIBRARIES
+                ${Matlab_IOMP_LIBRARY}
+                ${Matlab_MEX_LIBRARY}
+                ${Matlab_MX_LIBRARY}
+                ${Matlab_BLAS_LIBRARY}
+                ${Matlab_LAPACK_LIBRARY})
+    else()
+        find_package(Matlab COMPONENTS MX_LIBRARY REQUIRED)
+        set(Matlab_LINK_LIBRARIES ${Matlab_MEX_LIBRARY} ${Matlab_MX_LIBRARY})
+    endif ()
 
     set(HAVE_MATLAB ON)
 
@@ -121,7 +144,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # CP_CALS Library
 set(CP_CALS CALS_${BLA_VEN})
-add_library(${CP_CALS} SHARED)
+add_library(${CP_CALS})
 
 target_sources(${CP_CALS}
         PRIVATE
@@ -138,6 +161,7 @@ target_sources(${CP_CALS}
         src/utils/update.cpp
         src/multi_ktensor.cpp
         src/utils/line_search.cpp
+        extern/rectangular_lsap/rectangular_lsap.cpp
 
         PUBLIC
         include/als.h
@@ -162,29 +186,27 @@ target_compile_definitions(${CP_CALS} PUBLIC ${CP_CALS}=1)  # Enable the appropr
 
 set_target_properties(${CP_CALS} PROPERTIES POSITION_INDEPENDENT_CODE ON)  # -fPIC
 
-target_include_directories(${CP_CALS} PUBLIC include include/utils)
-
-target_link_libraries(${CP_CALS} PUBLIC OpenMP::OpenMP_CXX)
+target_include_directories(${CP_CALS} PUBLIC include include/utils extern)
 
 target_compile_definitions(${CP_CALS} PUBLIC SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
 # Link to BLAS and LAPACK and enable detailed timing, if not in MATLAB.
 if (NOT HAVE_MATLAB)
     target_compile_definitions(${CP_CALS} PUBLIC WITH_TIME=1)
+    target_link_libraries(${CP_CALS} PUBLIC OpenMP::OpenMP_CXX)
     target_link_libraries(${CP_CALS} PUBLIC ${BLAS_LIBRARIES})
     target_link_libraries(${CP_CALS} PUBLIC ${LAPACK_LIBRARIES})
 else ()
-    target_include_directories(${CP_CALS} PRIVATE ${Matlab_INCLUDE_DIRS})
+    target_include_directories(${CP_CALS} PUBLIC ${Matlab_INCLUDE_DIRS})
     target_compile_definitions(${CP_CALS} PUBLIC WITH_TIME=0)
-    target_link_libraries(${CP_CALS} PUBLIC ${Matlab_MX_LIBRARY})
-    target_link_libraries(${CP_CALS} PUBLIC ${Matlab_MEX_LIBRARY})
+    target_link_libraries(${CP_CALS} PUBLIC ${Matlab_LINK_LIBRARIES})
 endif ()
 
 ################################
 # Optimization Flags
 ################################
 # TODO: Use -w and -fcompare-debug-second to eliminate Cyclops warnings during compilation
-set(comp_flags -Wall)
+set(comp_flags -Wall -Wextra)
 if (CMAKE_BUILD_TYPE MATCHES Release)
     list(APPEND comp_flags -ffast-math -march=native)
 
@@ -198,7 +220,7 @@ if (CMAKE_BUILD_TYPE MATCHES Release)
 
     if (WITH_DIAGNOSTICS GREATER_EQUAL 2)
         if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-            list(APPEND comp_flags -Rpass=loop-vectorize -Rpass-missed=loop-vectorize -Rpass-analysis=loop-vectorize)
+            list(APPEND comp_flags -Rpass=loop-vectorize)
         endif ()
     endif ()
 endif ()
@@ -240,14 +262,12 @@ endif ()
 # Matlab
 ################################
 IF (HAVE_MATLAB)
-    add_library(cals_matlab_interface_library SHARED
-            ${CMAKE_SOURCE_DIR}/matlab/matlab.h
+    add_library(cals_matlab_interface_library
             ${CMAKE_SOURCE_DIR}/matlab/matlab.cpp
-            ${CMAKE_SOURCE_DIR}/matlab/matlab_parsing.h
             ${CMAKE_SOURCE_DIR}/matlab/matlab_parsing.cpp)
-    target_include_directories(cals_matlab_interface_library PRIVATE ${Matlab_INCLUDE_DIRS})
-    target_link_libraries(cals_matlab_interface_library CALS_MATLAB ${Matlab_MEX_LIBRARY} ${Matlab_MX_LIBRARY})
-    set(CALS_MATLAB_LINK_LIBS cals_matlab_interface_library CALS_MATLAB)
+    set_target_properties(cals_matlab_interface_library PROPERTIES POSITION_INDEPENDENT_CODE ON)  # -fPIC
+    #target_include_directories(cals_matlab_interface_library PRIVATE ${Matlab_INCLUDE_DIRS})
+    target_link_libraries(cals_matlab_interface_library CALS_MATLAB)
 
     # Newer versions of CMake have an API version argument to MATLAB_ADD_MEX
     # which needs to be set to the right value since it defaults to an incorrect
@@ -260,8 +280,17 @@ IF (HAVE_MATLAB)
     matlab_add_mex(NAME cp_cals_driver
             SRC ${CMAKE_SOURCE_DIR}/matlab/matlab_cp_cals.cpp
             ${CALS_MATLAB_API_VERSION})
+    target_link_libraries(cp_cals_driver cals_matlab_interface_library)
 
-    target_link_libraries(cp_cals_driver ${CALS_MATLAB_LINK_LIBS})
+    matlab_add_mex(NAME cp_cals_jk_driver
+            SRC ${CMAKE_SOURCE_DIR}/matlab/matlab_cp_cals_jk.cpp
+            ${CALS_MATLAB_API_VERSION})
+    target_link_libraries(cp_cals_jk_driver cals_matlab_interface_library)
+
+    matlab_add_mex(NAME cp_cals_hybrid_driver
+            SRC ${CMAKE_SOURCE_DIR}/matlab/matlab_cp_cals_hybrid.cpp
+            ${CALS_MATLAB_API_VERSION})
+    target_link_libraries(cp_cals_hybrid_driver cals_matlab_interface_library)
 endif ()
 
 ################################
