@@ -1,62 +1,55 @@
 language: cpp
 
-sudo: required
-
 branches:
   only:
     - master
 
 dist: focal
 
-matrix:
+jobs:
   include:
     - os: linux
-      env: TOOLSET=gcc COMPILER=g++-8
+      env: CC=gcc-8 CXX=g++-8 TOOLSET=gcc COMPILER=g++-8
     - os: linux
-      env: TOOLSET=gcc COMPILER=g++-10
+      env: CC=gcc-10 CXX=g++-10 TOOLSET=gcc COMPILER=g++-10
     - os: linux
-      env: TOOLSET=clang COMPILER=clang++-10
-
-compiler:
-  - gcc
-  - clang
+      env: CC=clang-10 CXX=clang++-10 TOOLSET=clang COMPILER=clang++-10
 
 addons:
   apt:
     sources:
-      - ubuntu-toolchain-r-test
-      - sourceline: 'https://apt.repos.intel.com/setup/intelproducts.list'
-        key_url: 'https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB'
+      - sourceline: 'ppa:ubuntu-toolchain-r/test'
     packages:
       - gcc-8
       - g++-8
       - gcc-10
       - g++-10
+      - clang-10
       - clang++-10
+      - libomp-dev
       - libgtest-dev
-      - intel-mkl-2019.5-075
+      - libopenblas-dev
 
 install:
   # Extract CMake 3.17.5
-  - wget https://github.com/Kitware/CMake/releases/download/v3.17.5/cmake-3.17.5-Linux-x86_64.tar.gz -qO- | tar xvJf - -C .
+  - wget https://github.com/Kitware/CMake/releases/download/v3.17.5/cmake-3.17.5-Linux-x86_64.tar.gz -qO- | tar xvzf - -C .
+  - export CMAKE_PATH=`pwd`/cmake-3.17.5-Linux-x86_64/bin
 
   # Install GTest
   - pushd .
   - cd /usr/src/gtest
   - sudo mkdir build
   - cd build
-  - sudo cmake ..
+  - sudo ${CMAKE_PATH}/cmake ..
   - sudo make
-  - sudo make install
   - popd
 
 before_script:
   - export PATH=`pwd`/cmake-3.17.5-Linux-x86_64/bin:$PATH
-  - source /opt/intel/bin/compilervars.sh intel64 -platform linux
   - mkdir build
   - cd build
   # TODO: Add if statement to check an environment variable specifying either MKL or OpenBLAS and use appropriate lib
-  - cmake -DCMAKE_BUILD_TYPE=RELEASE -DWITH_TRAVIS=On -DWITH_TESTS=On -DWITH_MKL=On ..
+  - cmake -DCMAKE_BUILD_TYPE=RELEASE -DWITH_TRAVIS=On -DWITH_TESTS=On -DWITH_OPENBLAS=On ..
   - VERBOSE=1 cmake --build .
 
 script:
