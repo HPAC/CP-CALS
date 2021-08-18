@@ -39,6 +39,17 @@ cmake  \
 make -j 8 all
 ```
 
+or the following commands to compile the OpenBLAS version.
+
+```bash
+cd CP-CALS/build
+cmake  \
+-DCMAKE_BUILD_TYPE=Release \
+-DWITH_OPENBLAS=ON ..
+
+make -j 8 all
+```
+
 Use the following commands to compile the MKL version with CUDA enabled.
 
 ```bash
@@ -71,4 +82,4 @@ make -j 8 all
 
 ### MATLAB examples
 
-After compiling the MATLAB MEX, one can execute file `matlab/matlab_src/TTB_vs_CALS.m` in MATLAB. This executable performs a comparisson of TensorToolbox and CALS. The user needs to first point MATLAB to the CALS MEX an the Tensor Toolbox source code, using the first two lines of the file.
+After compiling the MATLAB MEX, one can execute file `matlab/matlab_src/TTB_vs_CALS.m` in MATLAB. This executable performs a comparisson of TensorToolbox and CALS. The user first needs to point MATLAB to the CALS MEX and the Tensor Toolbox source code by editing the first two lines of the file.
