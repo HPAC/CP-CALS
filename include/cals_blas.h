@@ -57,10 +57,10 @@ inline void dpotrf(const char *uplo, int const *N, double *A, int const *Lda, in
 
 #elif CALS_MATLAB
 
-#include <cassert>
 #include "blas.h"
 #include "lapack.h"
 #include "mex.h"
+#include <cassert>
 
 #define CALS_BACKEND "MATLAB"
 
@@ -74,86 +74,86 @@ enum CBLAS_UPLO { CblasLower = 0, CblasUpper = 1 };
 
 enum CBLAS_SIDE { CblasRight = 0, CblasLeft = 1 };
 
-inline double cblas_dnrm2(long int n_elements, double *data, long int stride) {
-  return dnrm2_(&n_elements, data, &stride);
+inline double cblas_dnrm2(ptrdiff_t n_elements, double *data, ptrdiff_t stride) {
+  return dnrm2(&n_elements, data, &stride);
 }
 
-inline double cblas_dasum(long int n_elements, double *data, long int stride) {
-  return dasum_(&n_elements, data, &stride);
+inline double cblas_dasum(ptrdiff_t n_elements, double *data, ptrdiff_t stride) {
+  return dasum(&n_elements, data, &stride);
 }
 
-inline long int cblas_idamax(long int n_elements, double *data, long int stride) {
-  return idamax_(&n_elements, data, &stride) - 1;
+inline ptrdiff_t cblas_idamax(ptrdiff_t n_elements, double *data, ptrdiff_t stride) {
+  return idamax(&n_elements, data, &stride) - 1;
 }
 
-inline void
-cblas_dcopy(long int n_elements, double const *src_data, long int src_stride, double *dst_data, long int dst_stride) {
-  dcopy_(&n_elements, src_data, &src_stride, dst_data, &dst_stride);
+inline void cblas_dcopy(
+    ptrdiff_t n_elements, double const *src_data, ptrdiff_t src_stride, double *dst_data, ptrdiff_t dst_stride) {
+  dcopy(&n_elements, src_data, &src_stride, dst_data, &dst_stride);
 }
 
-inline void cblas_dscal(long int n_elements, double scalar, double *data, long int stride) {
-  dscal_(&n_elements, &scalar, data, &stride);
+inline void cblas_dscal(ptrdiff_t n_elements, double scalar, double *data, ptrdiff_t stride) {
+  dscal(&n_elements, &scalar, data, &stride);
 }
 
-inline void cblas_daxpy(long int n_elements, double scalar, double *x, long int ldx, double *y, long int ldy) {
-  daxpy_(&n_elements, &scalar, x, &ldx, y, &ldy);
+inline void cblas_daxpy(ptrdiff_t n_elements, double scalar, double *x, ptrdiff_t ldx, double *y, ptrdiff_t ldy) {
+  daxpy(&n_elements, &scalar, x, &ldx, y, &ldy);
 }
 
-inline void cblas_dgemm(CBLAS_ORDER Order,
+inline void cblas_dgemm([[maybe_unused]] CBLAS_ORDER Order,
                         CBLAS_TRANSPOSE TransA,
                         CBLAS_TRANSPOSE TransB,
-                        long int M,
-                        long int N,
-                        long int K,
+                        ptrdiff_t M,
+                        ptrdiff_t N,
+                        ptrdiff_t K,
                         double alpha,
                         const double *A,
-                        long int lda,
+                        ptrdiff_t lda,
                         const double *B,
-                        long int ldb,
+                        ptrdiff_t ldb,
                         double beta,
                         double *C,
-                        long int ldc) {
+                        ptrdiff_t ldc) {
   assert(Order == CblasColMajor);
   const char *transa = TransA == CblasTrans ? "T" : "N";
   const char *transb = TransB == CblasTrans ? "T" : "N";
-  dgemm_(transa, transb, &M, &N, &K, &alpha, A, &lda, B, &ldb, &beta, C, &ldc);
+  dgemm(transa, transb, &M, &N, &K, &alpha, A, &lda, B, &ldb, &beta, C, &ldc);
 }
 
-inline void cblas_dgemv(CBLAS_ORDER order,
+inline void cblas_dgemv([[maybe_unused]] CBLAS_ORDER order,
                         CBLAS_TRANSPOSE TransA,
-                        long int M,
-                        long int N,
+                        ptrdiff_t M,
+                        ptrdiff_t N,
                         double alpha,
                         const double *A,
-                        long int lda,
+                        ptrdiff_t lda,
                         const double *X,
-                        long int incX,
+                        ptrdiff_t incX,
                         double beta,
                         double *Y,
-                        long int incY) {
+                        ptrdiff_t incY) {
   assert(order == CblasColMajor);
   const char *transa = TransA == CblasTrans ? "T" : "N";
   dgemv(transa, &M, &N, &alpha, A, &lda, X, &incX, &beta, Y, &incY);
 }
 
-inline void cblas_dtrsm(CBLAS_ORDER Order,
+inline void cblas_dtrsm([[maybe_unused]] CBLAS_ORDER Order,
                         CBLAS_SIDE Side,
                         CBLAS_UPLO Uplo,
                         CBLAS_TRANSPOSE TransA,
                         CBLAS_DIAG Diag,
-                        long int M,
-                        long int N,
+                        ptrdiff_t M,
+                        ptrdiff_t N,
                         double alpha,
                         const double *A,
-                        long int lda,
+                        ptrdiff_t lda,
                         double *B,
-                        long int ldb) {
+                        ptrdiff_t ldb) {
   assert(Order == CblasColMajor);
   const char *transa = TransA == CblasTrans ? "T" : "N";
   const char *side = Side == CblasLeft ? "L" : "R";
   const char *uplo = Uplo == CblasUpper ? "U" : "L";
   const char *diag = Diag == CblasNonUnit ? "N" : "U";
-  dtrsm_(side, uplo, transa, diag, &M, &N, &alpha, A, &lda, B, &ldb);
+  dtrsm(side, uplo, transa, diag, &M, &N, &alpha, A, &lda, B, &ldb);
 }
 
 inline void dposv(const char *uplo,
@@ -164,19 +164,19 @@ inline void dposv(const char *uplo,
                   double *B,
                   int const *Ldb,
                   int const *Info) {
-  long int const n = *N;
-  long int const rhs = *Rhs;
-  long int const lda = *Lda;
-  long int const ldb = *Ldb;
-  long int info = *Info;
-  dposv_(uplo, &n, &rhs, A, &lda, B, &ldb, &info);
+  ptrdiff_t const n = *N;
+  ptrdiff_t const rhs = *Rhs;
+  ptrdiff_t const lda = *Lda;
+  ptrdiff_t const ldb = *Ldb;
+  ptrdiff_t info = *Info;
+  dposv(uplo, &n, &rhs, A, &lda, B, &ldb, &info);
 }
 
 inline void dpotrf(const char *uplo, int const *N, double *A, int const *Lda, int const *Info) {
-  long int const n = *N;
-  long int const lda = *Lda;
-  long int info = *Info;
-  dpotrf_(uplo, &n, A, &lda, &info);
+  ptrdiff_t const n = *N;
+  ptrdiff_t const lda = *Lda;
+  ptrdiff_t info = *Info;
+  dpotrf(uplo, &n, A, &lda, &info);
 }
 
 #endif

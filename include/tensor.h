@@ -118,7 +118,7 @@ public:
    * @param rank The desired rank of the Tensor.
    * @param modes A vector containing the sizes of each mode of the Ktensor.
    */
-  Tensor(int rank, const vector<dim_t> &modes);
+  Tensor(dim_t rank, const vector<dim_t> &modes);
 
   // Move and Copy Constructors
   Tensor(Tensor &&rhs) = default;

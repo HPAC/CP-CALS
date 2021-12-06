@@ -16,4 +16,5 @@ data/MKL/*/*.csv
 *.tar.gz
 
 scripts/slurm/log
+extern/
 build

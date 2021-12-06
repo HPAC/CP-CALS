@@ -5,7 +5,7 @@ logger = logging.getLogger('config')
 
 input_path = 'data/'
 lut_output_path = input_path
-plot_output_path = 'data/figures/'
+plot_output_path = 'data/figures'
 
 
 def generate_flops_per_sec(flops_per_cycle, cpu_ghz):
