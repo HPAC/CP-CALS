@@ -1,7 +1,6 @@
 #include "ktensor.h"
 
 #include <iostream>
-#include <random>
 
 #if CUDA_ENABLED
 #include "cuda_utils.h"
@@ -11,6 +10,10 @@ namespace cals {
 Ktensor &Ktensor::randomize() {
   for (auto &f : factors)
     f.randomize();
+
+  if (jk.enabled)
+    set_jk_fiber(0.0);
+
   normalize();
   return *this;
 }
@@ -18,6 +21,10 @@ Ktensor &Ktensor::randomize() {
 Ktensor &Ktensor::fill(function<double()> &&func) {
   for (auto &f : factors)
     f.fill(std::forward<decltype(func)>(func));
+
+  if (jk.enabled)
+    set_jk_fiber(0.0);
+
   normalize();
   return *this;
 }
@@ -31,7 +38,7 @@ void Ktensor::rec_to_tensor(
     }
   else if (level == 0) {
     double s = 0;
-    for (auto r = 0; r < components; r++) {
+    for (dim_t r = 0; r < components; r++) {
       double m = 1.0;
       for (dim_t f = 0; f < get_n_modes(); f++)
         m *= factors[f](dim_ind[f], r);
@@ -56,7 +63,7 @@ Tensor Ktensor::to_tensor() {
   return X;
 }
 
-Ktensor &Ktensor::normalize(int mode, int iteration) {
+Ktensor &Ktensor::normalize(dim_t mode, dim_t iteration) {
 #pragma omp parallel for // NOLINT(openmp-use-default-none)
   for (dim_t col = 0; col < factors[mode].get_cols(); col++) {
     auto &factor = factors[mode];
@@ -81,7 +88,7 @@ Ktensor &Ktensor::normalize() {
 
   for (dim_t n = 0; n < get_n_modes(); n++) {
     auto &factor = factors[n];
-    for (auto col = 0; col < get_components(); col++) {
+    for (dim_t col = 0; col < get_components(); col++) {
       auto coeff = cblas_dnrm2(factor.get_rows(), factor.get_data() + col * factor.get_col_stride(), 1);
       cblas_dscal(factor.get_rows(), 1 / coeff, factor.get_data() + col * factor.get_col_stride(), 1);
       lambda[col] *= coeff;
@@ -93,7 +100,7 @@ Ktensor &Ktensor::normalize() {
 
 Ktensor &Ktensor::denormalize() {
   auto &factor = factors[0];
-  for (auto col = 0; col < get_components(); col++)
+  for (dim_t col = 0; col < get_components(); col++)
     cblas_dscal(factor.get_rows(), lambda[col], factor.get_data() + col * factor.get_col_stride(), 1);
   normalized = false;
   return *this;
@@ -132,7 +139,7 @@ void Ktensor::print(const std::string &&text) const {
   using std::endl;
 
   cout << "----------------------------------------" << endl;
-  cout << "Ktensor:";
+  cout << text << endl;
   cout << "----------------------------------------" << endl;
 
   cout << "Rank: " << get_components() << endl;
@@ -151,6 +158,26 @@ void Ktensor::print(const std::string &&text) const {
     f.print("factor");
 
   cout << "----------------------------------------" << endl;
+}
+
+Ktensor &Ktensor::copy(Ktensor &rhs) {
+
+  //id = rhs.id;
+
+  approx_error = rhs.approx_error;
+  fit = rhs.fit;
+  old_fit = rhs.old_fit;
+  iters = rhs.iters;
+  normalized = rhs.normalized;
+
+  lambda = rhs.lambda;
+  active_set = rhs.active_set;
+
+  dim_t index = 0;
+  for (auto &f : factors)
+    f.copy(rhs.get_factor(index++));
+
+  return *this;
 }
 
 #if CUDA_ENABLED

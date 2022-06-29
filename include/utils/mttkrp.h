@@ -6,8 +6,6 @@
 #include <vector>
 
 #include "ktensor.h"
-#include "matrix.h"
-#include "tensor.h"
 #include "timer.h"
 
 namespace cals::mttkrp {
@@ -54,8 +52,8 @@ struct MttkrpParams {
 
   MttkrpTimers mttkrp_timers; /*< Output: Timer object containing a breakout of timings across the different phases. */
 
-  u_int64_t flops{0};  /*< Output: Number of FLOPs performed. */
-  u_int64_t memops{0}; /*< Output: Number of MemOps performed. */
+  uint64_t flops{0};  /*< Output: Number of FLOPs performed. */
+  uint64_t memops{0}; /*< Output: Number of MemOps performed. */
 
 #if CUDA_ENABLED
   cuda::CudaParams cuda_params{};
@@ -75,7 +73,7 @@ struct MttkrpParams {
 cals::Matrix &mttkrp(const cals::Tensor &X,
                      cals::Ktensor &u,
                      std::vector<cals::Matrix> &workspace,
-                     int mode,
+                     dim_t mode,
                      cals::mttkrp::MttkrpParams &params);
 
 /** Function to compute the Khatri-Rao product.

@@ -56,7 +56,7 @@ def mttkrp_performance_analysis(backend, modes, threads, gpu=False):
 
 
 def get_label_and_color(method, mode_index, modes):
-    simple = True
+    simple =  False
 
     I = modes[0]
     J = modes[1]
@@ -95,11 +95,11 @@ def get_label_and_color(method, mode_index, modes):
             label = 'TTM + TTV'
         else:
             if mode_index == 0:
-                label = '({} x {}) * ({} x R) - {} blocks'.format(I * K, J, J, K)
+                label = '({} x {}) * ({} x R) - {} blocks'.format(I, J, J, K)
             elif mode_index == 1:
                 label = '({} x {}) * ({} x R) - {} block'.format(J * K, I, I, 1)
             elif mode_index == 2:
-                label = '({} x {}) * ({} x R) - {} blocks'.format(J * K, I, I, K)
+                label = '({} x {}) * ({} x R) - {} blocks'.format(J, I, I, K)
             else:
                 logger.error('midx exceeds 3D size ({}). This analyzer is designed for 3D tensors.'.format(mode_index))
                 exit()
@@ -189,16 +189,22 @@ def plot_best_mttkrp(backend, modes, threads, best, ax=None, c=None, f_ylabel=Tr
 if __name__ == '__main__':
 
     backend = 'MKL'
-    gpu = False
+    gpu = True
     modes_l = []
     # modes_l.append((117, 18, 702))
     # modes_l.append((299, 301, 41))
     # modes_l.append((405, 136, 19))
     # modes_l.append((100, 100, 100))
-    modes_l.append((200, 200, 200))
+    # modes_l.append((200, 200, 200))
     # modes_l.append((300, 300, 300))
+    # modes_l.append((40, 200, 200))
+    # modes_l.append((40, 400, 400))
+    # modes_l.append((40, 800, 800))
+    modes_l.append((89, 97, 549))
+    modes_l.append((44, 2700, 200))
+
     for modes in modes_l:
-        for threads in [1, 24]:
+        for threads in [24]:
             mttkrp_performance_analysis(backend, modes, threads, gpu)
             best = best_method_per_rank(backend, modes, threads, gpu)
             plot_best_mttkrp(backend, modes, threads, best, gpu=gpu)

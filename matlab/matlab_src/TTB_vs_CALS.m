@@ -1,5 +1,5 @@
 % Path to your CALS MEX
-addpath("/home/chris/projects/SimALS/cmake-build-matlab/")
+addpath("/home/chris/projects/CP-CALS-priv/cmake-build-release-clang-mat/")
 % Path to TTB
 addpath("/home/chris/projects/tensor_toolbox/")
 
@@ -11,28 +11,28 @@ rand('state', 0)
 mode1 = 100;
 mode2 = 100;
 mode3 = 100;
-rank_min = 1;
-rank_max = 10;
-copies = 10;
+comp_min = 1;
+comp_max = 10;
+copies = 100;
 
 tic;
 % X = tensor(rand(mode1, mode2, mode3));
 X = full(ktensor({rand(mode1, 5), rand(mode2, 5), rand(mode3, 5)}));
-ranks = zeros(1, 10);
+components = zeros(1, 10);
 k = 1;
-for i = rank_min:rank_max
+for i = comp_min:comp_max
     for j = 1:copies
-        ranks(k) = i;
+        components(k) = i;
         k = k + 1;
     end    
 end
-rank_sum = sum(ranks);
+comp_sum = sum(components);
 
 ktensors = {};
-for r = 1:size(ranks, 2)
-    ktensors{r} = ktensor({rand(mode1, ranks(r)),
-                           rand(mode2, ranks(r)),
-                           rand(mode3, ranks(r))});
+for c = 1:size(components, 2)
+    ktensors{c} = ktensor({rand(mode1, components(c)),
+                           rand(mode2, components(c)),
+                           rand(mode3, components(c))});
 end
 time_gen = toc;
 fprintf('Time to generate tensor and models: %f\n', time_gen);
@@ -49,12 +49,12 @@ pause(3)
 disp(' ')
 disp('CALS...')
 tic
-M1 = cp_cals(X, ranks, ktensors, 'mttkrp-method', 'auto', 'tol', 1e-4, 'maxiters', 50, 'buffer-size',  rank_sum);
+M1 = cp_cals(X, components, ktensors, 'mttkrp-method', 'auto', 'tol', 1e-4, 'maxiters', 50, 'buffer-size',  comp_sum);
 time_cals = toc;
 
 t = size(M, 2) * [];
 for i = 1:size(M,2)
-    t(i) = abs(norm(X) - norm(M{i})) - abs(norm(X) - norm(M1{i}));
+    t(i) = norm(X - tensor(M{i})) - norm(X - tensor(M1{i}));
 end
 disp(' ')
 disp('-----------------------------------------------------------')

@@ -65,10 +65,15 @@ if __name__ == '__main__':
     # modes_l.append((117, 18, 702))
     # modes_l.append((299, 301, 41))
     # modes_l.append((405, 136, 19))
-    modes_l.append((255, 281, 25))
+    # modes_l.append((255, 281, 25))
     # modes_l.append((100, 100, 100))
     # modes_l.append((200, 200, 200))
-    # modes_l.append((300, 300, 300))
+    # modes_l.append((40, 200, 200))
+    # modes_l.append((40, 400, 400))
+    # modes_l.append((40, 800, 800))
+    modes_l.append((89, 97, 549))
+    modes_l.append((44, 2700, 200))
+
     for modes in modes_l:
         for threads in [1, 24]:
             if not gpu:

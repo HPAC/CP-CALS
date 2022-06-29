@@ -88,10 +88,9 @@
 using std::cerr;
 using std::endl;
 
-
-cals::Tensor mxGetTensor(const mxArray *ptr, bool print)
-{
-  if (!mxIsClass(ptr, "tensor")) cerr << "Arg is not a tensor!" << endl;
+cals::Tensor mxGetTensor(const mxArray *ptr, bool print) {
+  if (!mxIsClass(ptr, "tensor"))
+    cerr << "Arg is not a tensor!" << endl;
 
   mxArray *data_field = mxGetField(ptr, 0, "data");
   mxArray *size_field = mxGetField(ptr, 0, "size");
@@ -104,39 +103,39 @@ cals::Tensor mxGetTensor(const mxArray *ptr, bool print)
 
   std::vector<dim_t> modes_vector;
   modes_vector.reserve(n_modes);
-  for (int i = 0; i < n_modes; i++)
+  for (auto i = 0lu; i < n_modes; i++)
     modes_vector.push_back(static_cast<dim_t>(modes[i]));
 
   assert(std::accumulate(modes_vector.cbegin(), modes_vector.cend(), 1lu, std::multiplies<>()) == n_elements);
 
   auto X = cals::Tensor(modes_vector, data);
 
-  if (print) X.print();
+  if (print)
+    X.print();
 
   return X;
 }
 
-mxArray *mxSetKtensor(const cals::Ktensor &ktensor)
-{
+mxArray *mxSetKtensor(const cals::Ktensor &ktensor) {
   const auto n_modes = ktensor.get_n_modes();
 
   // Create factor matrix array (cell array in matlab)
-  mxArray *cell_array_ptr = mxCreateCellMatrix((mwSize) n_modes, (mwSize) 1);
-  for (dim_t i = 0; i < n_modes; i++)
-  {
+  mxArray *cell_array_ptr = mxCreateCellMatrix((mwSize)n_modes, (mwSize)1);
+  for (dim_t i = 0; i < n_modes; i++) {
     const auto rows = ktensor.get_factor(i).get_rows();
     const auto cols = ktensor.get_factor(i).get_cols();
-    mxArray *mat_ptr = mxCreateDoubleMatrix((mwSize) rows, (mwSize) cols, mxREAL);
+    mxArray *mat_ptr = mxCreateDoubleMatrix((mwSize)rows, (mwSize)cols, mxREAL);
     double *mat = mxGetDoubles(mat_ptr);
     cals::Matrix(rows, cols, mat).copy(ktensor.get_factor(i));
-    mxSetCell(cell_array_ptr, (mwIndex) i, mat_ptr);
+    mxSetCell(cell_array_ptr, (mwIndex)i, mat_ptr);
   }
 
   // Create lambda array
-  mxArray *lambda_ptr = mxCreateDoubleMatrix((mwSize) ktensor.get_components(), (mwSize) 1, mxREAL);
+  mxArray *lambda_ptr = mxCreateDoubleMatrix((mwSize)ktensor.get_components(), (mwSize)1, mxREAL);
   double *lambda = mxGetDoubles(lambda_ptr);
   int i = 0;
-  for (const auto &l : ktensor.get_lambda()) lambda[i++] = l;
+  for (const auto &l : ktensor.get_lambda())
+    lambda[i++] = l;
 
   // Create Ktensor class by calling Ktensor constructor
   mxArray *lhs[1];
@@ -146,9 +145,9 @@ mxArray *mxSetKtensor(const cals::Ktensor &ktensor)
   return lhs[0];
 }
 
-cals::Ktensor mxGetKtensor(const mxArray *ptr, bool print)
-{
-  if (!mxIsStruct(ptr)) cerr << "Arg is not a struct!" << endl;
+cals::Ktensor mxGetKtensor(const mxArray *ptr, bool print) {
+  if (!mxIsStruct(ptr))
+    cerr << "Arg is not a struct!" << endl;
 
   // Get lambda array
   mxArray *lambda_field = mxGetField(ptr, 0, "lambda");
@@ -162,9 +161,8 @@ cals::Ktensor mxGetKtensor(const mxArray *ptr, bool print)
   // Create and initialize modes vector
   std::vector<dim_t> modes;
   modes.reserve(n_modes);
-  for (int i = 0; i < n_modes; ++i)
-  {
-    mxArray *mat = mxGetCell(u_field, (mwIndex) i);
+  for (auto i = 0lu; i < n_modes; ++i) {
+    mxArray *mat = mxGetCell(u_field, (mwIndex)i);
     modes.push_back(mxGetM(mat));
   }
 
@@ -175,34 +173,32 @@ cals::Ktensor mxGetKtensor(const mxArray *ptr, bool print)
   ktensor.set_lambda(lambda);
 
   // Copy factor matrices
-  for (int i = 0; i < n_modes; ++i)
-  {
-    mxArray *mat = mxGetCell(u_field, (mwIndex) i);
+  for (auto i = 0lu; i < n_modes; ++i) {
+    mxArray *mat = mxGetCell(u_field, (mwIndex)i);
     double *data_ptr = mxGetDoubles(mat);
-    ktensor.set_factor(i, data_ptr);
+    ktensor.set_factor(static_cast<int>(i), data_ptr);
   }
 
-  if (print) ktensor.print();
+  if (print)
+    ktensor.print();
 
   return ktensor;
 }
 
-std::string mxGetStdString(const mxArray *ptr)
-{
+std::string mxGetStdString(const mxArray *ptr) {
   const mwSize str_len = mxGetNumberOfElements(ptr);
   char *c_str = new char[str_len + 1];
   int ret = mxGetString(ptr, c_str, str_len + 1);
-  if (ret != 0) cerr << "mxGetString failed!" << endl;
+  if (ret != 0)
+    cerr << "mxGetString failed!" << endl;
   std::string str(c_str);
   delete[] c_str;
   return str;
 }
 
-std::vector<std::string> mxBuildArgList(int nargs, int offset, const mxArray *margs[])
-{
+std::vector<std::string> mxBuildArgList(int nargs, int offset, const mxArray *margs[]) {
   std::vector<std::string> args(static_cast<size_t>(nargs - offset));
-  for (int i = 0; i < nargs - offset; i++)
-  {
+  for (int i = 0; i < nargs - offset; i++) {
     const mxArray *arg = margs[i + offset];
     if (mxIsScalar(arg))
       args[i] = std::to_string(mxGetScalar(arg));

@@ -8,9 +8,11 @@
 #include <numeric>
 #include <queue>
 
+#include "als.h"
 #include "ktensor.h"
 #include "tensor.h"
 #include "timer.h"
+#include "utils/line_search.h"
 #include "utils/mttkrp.h"
 #include "utils/update.h"
 #include "utils/utils.h"
@@ -25,24 +27,28 @@ typedef std::queue<std::reference_wrapper<Ktensor>> KtensorQueue;
 struct CalsReport {
   // Target tensor details
   int tensor_rank;     /*!< Target tensor rank (if available). */
-  int n_modes;         /*!< Target tensor number of modes (dimensions). */
+  dim_t n_modes;       /*!< Target tensor number of modes (dimensions). */
   vector<dim_t> modes; /*!< Target tensor mode sizes. */
   double X_norm;       /*!< Target tensor norm. */
 
   // Execution parameters
-  int iter{0};                         /*!< Total number of iterations of the CALS algorithm. */
-  int max_iter;                        /*!< Maximum number of iterations for each model. */
+  dim_t iter{0};                       /*!< Total number of iterations of the CALS algorithm. */
+  dim_t max_iter;                      /*!< Maximum number of iterations for each model. */
   int n_threads;                       /*!< Number of threads available. */
-  int buffer_size;                     /*!< Max buffer size used. */
+  dim_t buffer_size;                   /*!< Max buffer size used. */
   int n_ktensors{0};                   /*!< Total number of Ktensors that were fitted to the target tensor. */
-  int ktensor_rank_sum{0};             /*!< Total rank sum of all Ktensors fitted to the target tensor. */
+  int ktensor_comp_sum{0};             /*!< Total component sum of all Ktensors fitted to the target tensor. */
   double tol;                          /*!< Tolerance used to determine when a Ktensor had reached convergence. */
   bool cuda;                           /*!< Whether CUDA was used. */
-  bool line_search;                    /*!< Whether line search was used. */
-  int line_search_interval;            /*!< Number of iterations (per model) when line search was invoked. */
-  double line_search_step;             /*!< Factor with which line search moved. */
   update::UPDATE_METHOD update_method; /*!< Update method used for all Ktensors. */
   std::string output_file_name;        /*!< Name of the output file to export data (used in experiments) */
+
+  bool line_search;         /*!< Whether line search was used. */
+  int line_search_interval; /*!< Number of iterations (per model) when line search was invoked. */
+  double line_search_step;  /*!< Factor with which line search moved. */
+  dim_t ls_performed{0};
+  dim_t ls_failed{0};
+  ls::LS_METHOD line_search_method;
 
   // Timers
   double total_time{0.0};
@@ -53,7 +59,7 @@ struct CalsReport {
 
   // Experiment analysis data
   vector<uint64_t> flops_per_iteration; /*!< Number of FLOPS performed in each iteration. */
-  vector<int> cols;                     /*!< Number of active columns of the multi-factors for every iteration. */
+  vector<dim_t> cols;                   /*!< Number of active columns of the multi-factors for every iteration. */
 #endif
 
   /* Print header of CSV file, containing information about an CALS invocation.
@@ -66,11 +72,20 @@ struct CalsReport {
 
     AlsTimers als_timers;
     ModeTimers mode_timers;
-    file << "TENSOR_RANK" << sep << "TENSOR_MODES" << sep << "BUFFER_SIZE" << sep << "N_KTENSORS" << sep
-         << "KTENSOR_RANK_SUM" << sep << "UPDATE_METHOD" << sep << "LINE_SEARCH" << sep << "MAX_ITERS" << sep << "ITER"
-         << sep << "NUM_THREADS" << sep;
+    file << "TENSOR_RANK" << sep;
+    file << "TENSOR_MODES" << sep;
+    file << "BUFFER_SIZE" << sep;
+    file << "N_KTENSORS" << sep;
+    file << "KTENSOR_COMP_SUM" << sep;
+    file << "UPDATE_METHOD" << sep;
+    file << "LINE_SEARCH" << sep;
+    file << "MAX_ITERS" << sep;
+    file << "ITER" << sep;
+    file << "NUM_THREADS" << sep;
+    file << "TOTAL" << sep;
 #if WITH_TIME
-    file << "TOTAL" << sep << "FLOPS" << sep << "COLS" << sep;
+    file << "FLOPS" << sep;
+    file << "COLS" << sep;
     for (const auto &name : als_timers.names)
       file << name << sep;
     for (auto i = 0lu; i < modes.size(); i++)
@@ -94,14 +109,14 @@ struct CalsReport {
       file << cals::utils::mode_string(modes) << sep;
       file << buffer_size << sep;
       file << n_ktensors << sep;
-      file << ktensor_rank_sum << sep;
+      file << ktensor_comp_sum << sep;
       file << update::update_method_names[update_method] << sep;
       file << line_search << sep;
       file << max_iter << sep;
       file << it + 1 << sep;
       file << n_threads << sep;
-#if WITH_TIME
       file << total_time << sep;
+#if WITH_TIME
       file << flops_per_iteration[it] << sep;
       file << cols[it] << sep;
 
@@ -130,13 +145,15 @@ struct CalsParams {
   /*! Lookup table with the best variant of MTTKRP per mode. */
   cals::mttkrp::MttkrpLut mttkrp_lut{};
 
-  dim_t max_iterations{200};    /*!< Maximum number of iterations before evicting a model. */
-  double tol{1e-7};             /*!< Tolerance of fit difference between consecutive iterations. */
-  bool line_search{false};      /*!< Use line search. */
-  int line_search_interval{5};  /*!< Number of iterations when line search is invoked.*/
-  double line_search_step{1.2}; /*!< Factor for line search. */
-  bool cuda{false};             /*!< Use CUDA (make sure code is compiled with CUDA support). */
-  dim_t buffer_size{4200};      /*!< Maximum size of the multi-factor columns (sum of ranks of concurrent models) */
+  dim_t max_iterations{200}; /*!< Maximum number of iterations before evicting a model. */
+  double tol{1e-7};          /*!< Tolerance of fit difference between consecutive iterations. */
+  bool cuda{false};          /*!< Use CUDA (make sure code is compiled with CUDA support). */
+  dim_t buffer_size{4200};   /*!< Maximum size of the multi-factor columns (sum of ranks of concurrent models) */
+
+  bool line_search{false};     /*!< Use line search. */
+  int line_search_interval{5}; /*!< Number of iterations when line search is invoked. */
+  double line_search_step{0};  /*!< Factor for line search. If not set (set to 0), (iteration)^(1/3) is used. */
+  ls::LS_METHOD line_search_method{ls::NO_ERROR_CHECKING};
 
   bool force_max_iter{false};     /*!< Force maximum iterations for every model (for experiments) */
   bool always_evict_first{false}; /*!< Always evict the first model in the buffer (for experiments) */
@@ -156,8 +173,10 @@ struct CalsParams {
     cout << "Mttkrp Method:   " << mttkrp::mttkrp_method_names[mttkrp_method] << endl;
     cout << "Update Method:   " << update::update_method_names[update_method] << endl;
     cout << "Line Search:     " << ((line_search) ? "true" : "false") << endl;
-    if (line_search)
-      cout << "-Line Search Int: " << line_search_interval << " iterations" << endl;
+    if (line_search) {
+      cout << "-Line Search Interval: " << line_search_interval << " iterations" << endl;
+      cout << "-Line Search Method:   " << ls::ls_method_names[line_search_method] << endl;
+    }
     cout << "CUDA:            " << ((cuda) ? "true" : "false") << endl;
     cout << "---------------------------------------" << endl;
   }
@@ -170,10 +189,12 @@ struct CalsParams {
  *
  * @param X Target tensor to be decomposed.
  * @param kt_queue A queue of references to the input Ktensors, which need to be fitted to the target tensor using ALS.
- * @param params Parameters for the algorithm.
+ * @param cals_params Parameters for the algorithm.
  *
  * @return CalsReport object, containing all data from the execution.
  */
-CalsReport cp_cals(const Tensor &X, KtensorQueue &kt_queue, CalsParams &params);
+CalsReport cp_cals(const Tensor &X, KtensorQueue &kt_queue, CalsParams &cals_params);
+
+JKReport jk_cp_cals(const Tensor &X, vector<Ktensor> &kt_vector, CalsParams &cals_params);
 } // namespace cals
 #endif // CALS_CALS_H
