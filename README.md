@@ -84,7 +84,7 @@ After compiling the MATLAB MEX, one can execute file `matlab/matlab_src/TTB_vs_C
 
 ## Related Publications
 
-* Algorithm XXX: Concurrent Alternating Least Squares for multiple simultaneous Canonical Polyadic Decompositions
+* [Algorithm XXX: Concurrent Alternating Least Squares for multiple simultaneous Canonical Polyadic Decompositions](https://dl.acm.org/doi/10.1145/3519383)
 
 ```bibtex
 @article{10.1145/3519383,
@@ -103,7 +103,7 @@ After compiling the MATLAB MEX, one can execute file `matlab/matlab_src/TTB_vs_C
 }
 ```
 
-* Accelerating jackknife resampling for the Canonical Polyadic Decomposition
+* [Accelerating jackknife resampling for the Canonical Polyadic Decomposition](https://www.frontiersin.org/articles/10.3389/fams.2022.830270/full)
 
 ```bibtex
 @article{10.3389/fams.2022.830270,
