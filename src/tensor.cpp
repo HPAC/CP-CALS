@@ -2,7 +2,9 @@
 #include "ktensor.h"
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <numeric>
 #include <random>
 #include <sstream>
 
@@ -15,7 +17,8 @@ using std::multiplies;
 namespace cals {
 Tensor::Tensor(const vector<dim_t> &modes)
     : n_elements{accumulate(modes.cbegin(), modes.cend(), static_cast<dim_t>(1), multiplies<>())},
-      max_n_elements{n_elements}, modes{modes} {
+      max_n_elements{n_elements},
+      modes{modes} {
   auto *host_ptr = (double *)operator new[](n_elements * sizeof(double), alignment);
   data_up = unique_ptr<double, decltype(&Dopnew)>(host_ptr, &Dopnew);
   data = data_up.get();
@@ -24,7 +27,10 @@ Tensor::Tensor(const vector<dim_t> &modes)
 // Constructor for Matlab, to not copy the tensor twice.
 Tensor::Tensor(const vector<dim_t> &modes, double *view_data)
     : n_elements{accumulate(modes.cbegin(), modes.cend(), static_cast<dim_t>(1), multiplies<>())},
-      max_n_elements{n_elements}, modes{modes}, data_up{nullptr, &Dopnew}, data{view_data} {}
+      max_n_elements{n_elements},
+      modes{modes},
+      data_up{nullptr, &Dopnew},
+      data{view_data} {}
 
 Tensor::Tensor(const std::string &file_name) {
   vector<dim_t> modes_read;
@@ -70,7 +76,7 @@ Tensor::Tensor(dim_t mode0, dim_t mode1, double *view_data)
   }
 }
 
-Tensor::Tensor(int rank, const vector<dim_t> &modes) {
+Tensor::Tensor(dim_t rank, const vector<dim_t> &modes) {
   Ktensor P(rank, modes);
   P.randomize();
 
@@ -175,13 +181,14 @@ Unfolding Tensor::implicit_unfold(const dim_t mode) const {
 
 void Tensor::print(const std::string &&text) const {
   cout << "----------------------------------------" << endl;
+  cout << text << endl;
   cout << "Modes: ";
   for (auto const &m : modes)
     cout << m << " ";
   cout << endl;
   cout << "data = [ ";
   for (dim_t i = 0; i < n_elements; i++)
-    cout << data[i] << "  ";
+    cout << std::setw(6) << data[i] << "  ";
   cout << "]" << endl;
   cout << "----------------------------------------" << endl;
 }

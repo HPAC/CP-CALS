@@ -4,7 +4,9 @@
 #ifndef NDEBUG
 #define DEBUG(exp) exp
 #else
-#define DEBUG(exp) do {} while(0);
+#define DEBUG(exp)                                                                                                     \
+  do {                                                                                                                 \
+  } while (0);
 #endif
 
 #if WITH_TIME

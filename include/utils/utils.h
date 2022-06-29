@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "matrix.h"
+#include "ktensor.h"
 
 namespace cals::utils {
 /** Create a string with the modes of a tensor.
@@ -13,6 +13,14 @@ namespace cals::utils {
  * @return String with the modes of a tensor.
  */
 std::string mode_string(std::vector<dim_t> const &modes);
+
+cals::Ktensor concatenate_ktensors(std::vector<cals::Ktensor> const &ktensors);
+
+void generate_jk_ktensors(cals::Ktensor const &reference_ktensor, std::vector<cals::Ktensor> &jk_ktensor_v);
+
+void jk_permutation_adjustment(cals::Ktensor &ktensor, std::vector<cals::Ktensor> &jk_ktensor_v);
+
+vector<double> calculate_jackknifing_norms(cals::Tensor const &tensor);
 } // namespace cals::utils
 
 namespace cals::ops {
@@ -22,6 +30,13 @@ namespace cals::ops {
  * @param[out] gramian Matrix in which to store the gramian.
  */
 void update_gramian(const cals::Matrix &factor, cals::Matrix &gramian);
+
+/** Compute all gramians of a Ktensor by performing an A^{T}A operation.
+ *
+ * @param[in] Ktensor Ktensor whose gramians should be updated.
+ * @param[out] gramians Vector of Matrix objects, in which to store the gramians.
+ */
+void update_gramians(const cals::Ktensor &ktensor, vector<Matrix> &gramians);
 
 /** Compute the hadamard product of a set of matrices except one (which will be the output).
  *
@@ -33,7 +48,7 @@ void update_gramian(const cals::Matrix &factor, cals::Matrix &gramian);
  *
  * @return Reference to Matrix used as output.
  */
-Matrix &hadamard_but_one(std::vector<cals::Matrix> &matrices, int mode);
+Matrix &hadamard_but_one(std::vector<cals::Matrix> &matrices, dim_t mode);
 
 /** Compute the hadamard product of all matrices and store the result in the first.
  *

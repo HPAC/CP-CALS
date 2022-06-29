@@ -45,12 +45,18 @@ int main(int argc, char *argv[]) {
   methods_v.push_back(MTTKRP_METHOD::TWOSTEP1);
 
   vector<vector<dim_t>> modes_v;
-  modes_v.push_back({100, 100, 100});
-  modes_v.push_back({200, 200, 200});
-  modes_v.push_back({300, 300, 300});
+  //  modes_v.push_back({100, 100, 100});
+  //  modes_v.push_back({200, 200, 200});
+  //  modes_v.push_back({300, 300, 300});
   // modes_v.push_back({299, 301, 41});
   // modes_v.push_back({405, 136, 19});
   // modes_v.push_back({255, 281, 25});
+
+  //  modes_v.push_back({50, 200, 200});
+  //  modes_v.push_back({50, 400, 400});
+  //  modes_v.push_back({50, 800, 800});
+  modes_v.push_back({89, 97, 549});
+  modes_v.push_back({44, 2700, 200});
 
   for (auto method : methods_v)
     for (auto &modes : modes_v)

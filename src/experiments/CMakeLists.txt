@@ -6,6 +6,10 @@ add_executable(experiments experiments.cpp experiments_utils.cpp)
 add_compilation_flags(experiments "${comp_flags}")
 target_link_libraries(experiments PUBLIC ${CP_CALS})
 
+add_executable(experiments_jk experiments_jk.cpp experiments_utils.cpp)
+add_compilation_flags(experiments_jk "${comp_flags}")
+target_link_libraries(experiments_jk PUBLIC ${CP_CALS})
+
 add_executable(benchmark_cals_mttkrp benchmark_cals_mttkrp.cpp)
 add_compilation_flags(benchmark_cals_mttkrp "${comp_flags}")
 target_link_libraries(benchmark_cals_mttkrp PUBLIC ${CP_CALS})

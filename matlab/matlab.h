@@ -96,4 +96,4 @@ std::string mxGetStdString(const mxArray *ptr);
 
 std::vector<std::string> mxBuildArgList(int nargs, int offset, const mxArray *margs[]);
 
-#endif //CALS_MATLAB_H
+#endif // CALS_MATLAB_H

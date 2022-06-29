@@ -80,83 +80,79 @@
 #ifndef CALS_MATLAB_PARSING_H
 #define CALS_MATLAB_PARSING_H
 
-#include <vector>
-#include <string>
-#include <sstream>
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "cals.h"
 
-using std::vector;
-using std::string;
-using std::find;
 using std::cerr;
 using std::endl;
+using std::find;
+using std::string;
+using std::vector;
 
-namespace cals::matlab::parsing
-{
-  template<typename T>
-  T parse_enum(vector<string> &args, const string &cl_arg, T default_value, unsigned num_values, const T *values,
-                   const char *const *names)
-  {
-    auto it = find(args.begin(), args.end(), cl_arg);
-    // If not found, try removing the '--'
-    if ((it == args.end()) && (cl_arg.size() > 2) &&
-        (cl_arg[0] == '-') && (cl_arg[1] == '-'))
-    {
-      it = find(args.begin(), args.end(), cl_arg.substr(2));
-    }
-    if (it != args.end())
-    {
-      auto arg_it = it;
-      // get next cl_arg
-      ++it;
-      if (it == args.end())
-      {
-        args.erase(arg_it);
-        return default_value;
-      }
-      // convert to string
-      std::string arg_val = *it;
-      // Remove argument from list
-      args.erase(arg_it, ++it);
-      // find name in list of names
-      for (unsigned i = 0; i < num_values; ++i)
-      {
-        if (arg_val == names[i])
-          return values[i];
-      }
-      // if we got here, name wasn't found
-      std::ostringstream error_string;
-      error_string << "Bad input: " << cl_arg << " " << arg_val << ",  must be one of the values: ";
-      for (unsigned i = 0; i < num_values; ++i)
-      {
-        error_string << names[i];
-        if (i != num_values - 1)
-          error_string << ", ";
-      }
-      error_string << "." << endl;
-      cerr << error_string.str() << endl;
-      exit(1);
-    }
-    // return default value if not specified on command line
-    return default_value;
+namespace cals::matlab::parsing {
+template <typename T>
+T parse_enum(vector<string> &args,
+             const string &cl_arg,
+             T default_value,
+             unsigned num_values,
+             const T *values,
+             const char *const *names) {
+  auto it = find(args.begin(), args.end(), cl_arg);
+  // If not found, try removing the '--'
+  if ((it == args.end()) && (cl_arg.size() > 2) && (cl_arg[0] == '-') && (cl_arg[1] == '-')) {
+    it = find(args.begin(), args.end(), cl_arg.substr(2));
   }
-
-  int parse_indx(vector<string> &args, const string &cl_arg, int default_value, int min, int max);
-
-  double parse_real(vector<string> &args, const string &cl_arg, double default_value, double min, double max);
-
-  bool parse_bool(vector<string>& args, const string& cl_arg_on, const string& cl_arg_off, bool default_value);
-
-  /** Parse options from matlab call (defaults are the struct default values).
-   *
-   * This function is used to parse arguments from Matlab.
-   *
-   * @param params CalsParams object containing the parameters for a call to cals.
-   * @param args Vector of strings containing CALS parameters obtained by the command line.
-   */
-  void parse(cals::CalsParams &params, vector<string> &args);
+  if (it != args.end()) {
+    auto arg_it = it;
+    // get next cl_arg
+    ++it;
+    if (it == args.end()) {
+      args.erase(arg_it);
+      return default_value;
+    }
+    // convert to string
+    std::string arg_val = *it;
+    // Remove argument from list
+    args.erase(arg_it, ++it);
+    // find name in list of names
+    for (unsigned i = 0; i < num_values; ++i) {
+      if (arg_val == names[i])
+        return values[i];
+    }
+    // if we got here, name wasn't found
+    std::ostringstream error_string;
+    error_string << "Bad input: " << cl_arg << " " << arg_val << ",  must be one of the values: ";
+    for (unsigned i = 0; i < num_values; ++i) {
+      error_string << names[i];
+      if (i != num_values - 1)
+        error_string << ", ";
+    }
+    error_string << "." << endl;
+    cerr << error_string.str() << endl;
+    exit(1);
+  }
+  // return default value if not specified on command line
+  return default_value;
 }
-#endif //CALS_MATLAB_PARSING_H
+
+int parse_indx(vector<string> &args, const string &cl_arg, int default_value, int min, int max);
+
+double parse_real(vector<string> &args, const string &cl_arg, double default_value, double min, double max);
+
+bool parse_bool(vector<string> &args, const string &cl_arg_on, const string &cl_arg_off, bool default_value);
+
+/** Parse options from matlab call (defaults are the struct default values).
+ *
+ * This function is used to parse arguments from Matlab.
+ *
+ * @param params CalsParams object containing the parameters for a call to cals.
+ * @param args Vector of strings containing CALS parameters obtained by the command line.
+ */
+void parse(cals::CalsParams &params, vector<string> &args);
+} // namespace cals::matlab::parsing
+#endif // CALS_MATLAB_PARSING_H
