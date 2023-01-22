@@ -84,38 +84,6 @@ After compiling the MATLAB MEX, one can execute file `matlab/matlab_src/TTB_vs_C
 
 ## Related Publications
 
-* [Algorithm XXX: Concurrent Alternating Least Squares for multiple simultaneous Canonical Polyadic Decompositions](https://dl.acm.org/doi/10.1145/3519383)
-
-```bibtex
-@article{10.1145/3519383,
-	title        = {Algorithm XXX: Concurrent Alternating Least Squares for Multiple Simultaneous Canonical Polyadic Decompositions},
-	author       = {Psarras, Christos and Karlsson, Lars and Bro, Rasmus and Bientinesi, Paolo},
-	year         = 2022,
-	month        = {feb},
-	journal      = {ACM Trans. Math. Softw.},
-	publisher    = {Association for Computing Machinery},
-	address      = {New York, NY, USA},
-	doi          = {10.1145/3519383},
-	issn         = {0098-3500},
-	url          = {https://doi.org/10.1145/3519383},
-	note         = {Just Accepted},
-	keywords     = {PARAFAC, high-performance, Tensor, CP, decomposition}
-}
-```
+* [Algorithm 1026: Concurrent Alternating Least Squares for multiple simultaneous Canonical Polyadic Decompositions](https://dl.acm.org/doi/10.1145/3519383)
 
 * [Accelerating jackknife resampling for the Canonical Polyadic Decomposition](https://www.frontiersin.org/articles/10.3389/fams.2022.830270/full)
-
-```bibtex
-@article{10.3389/fams.2022.830270,
-	title        = {Accelerating Jackknife Resampling for the Canonical Polyadic Decomposition},
-	author       = {Psarras, Christos and Karlsson, Lars and Bro, Rasmus and Bientinesi, Paolo},
-	year         = 2022,
-	journal      = {Frontiers in Applied Mathematics and Statistics},
-	volume       = 8,
-	doi          = {10.3389/fams.2022.830270},
-	issn         = {2297-4687},
-	url          = {https://www.frontiersin.org/article/10.3389/fams.2022.830270},
-}
-```
-
-
